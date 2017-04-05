@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<software>
+    <metadata>
+        <name>BC Icon Extensions</name>
+        <version>0.1.2</version>
+        <copyright>Copyright (C) 1999 - 2017 Brookins Consulting and eZ Systems AS</copyright>
+        <license>GNU General Public License</license>
+        <info_url>https://github.com/brookinsconsulting/bciconextensions</info_url>
+    </metadata>
+</software>

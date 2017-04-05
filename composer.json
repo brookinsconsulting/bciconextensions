@@ -1,0 +1,34 @@
+{
+    "name": "brookinsconsulting/bciconextensions",
+    "description": "eZ Publish Legacy extension which provides a basic but time tested kernel override class modified to offer flexible solution for storing share/icon theme icons within eZ Publish extensions instead of kernel hacking your eZ Publish installation. Great for smart developers!",
+    "type": "ezpublish-legacy-extension",
+    "keywords": [ "eZ Publish", "eZ Publish Legacy", "eZ Publish Platform", "share", "icon", "icons", "theme", "themes", "extension", "kernel-override" ],
+    "homepage": "https://github.com/brookinsconsulting/bciconextensions",
+    "license": "GPL-2.0+",
+    "authors": [
+        {
+            "name" : "Brookins Consulting",
+            "homepage": "http://brookinsconsulting.com",
+            "email": "info@brookinsconsulting.com",
+            "role": "Developer"
+        },
+        {
+            "name" : "YMC AG",
+            "homepage": "https://github.com/ymc",
+            "role": "Original Author"
+        },
+	{
+            "name" : "eZ Systems",
+            "homepage": "https://github.com/ezsystems",
+            "role": "Original Class Author"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {
+        "php": ">=5.0.0",
+        "ezsystems/ezpublish-legacy-installer": "*"
+    },
+    "extra": {
+        "ezpublish-legacy-extension-name": "bciconextensions"
+    }
+}
