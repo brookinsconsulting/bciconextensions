@@ -205,6 +205,8 @@ AdditionalThemeList[]=exotic
 
 And make shure they exists either in an extension or in the default repository.
 
+*Please note:* The directory structure of your icon extension (and it's themes) must match the directory structure conventions of the eZ Publish Legacy share/icons content provided in a default installation. The more you match the defaults expected the less ini setting configuration settings override you will require.
+
 
 Troubleshooting
 ===============
