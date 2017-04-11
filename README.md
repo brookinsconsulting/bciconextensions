@@ -146,6 +146,13 @@ Optional. Clear eZ Publish Platform / eZ Publish Legacy caches (Required).
 
     php ./bin/php/ezcache.php --clear-all;
 
+### Install Apache ModRewrite Rules
+
+Required. To be able to access the image files provided by an icon extension you must install the following apache mod_rewrite rule into your webserver's virtual host configuration.
+
+    # bciconextensions required mod_rewrite rules to allow access to icon extension icon image files
+    RewriteRule ^/extension/[^/]+/icons/[^/]+/[^/]+/[^/]+/.* - [L]
+
 
 Usage
 =====
