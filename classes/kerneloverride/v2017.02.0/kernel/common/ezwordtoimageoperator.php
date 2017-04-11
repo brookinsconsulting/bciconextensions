@@ -85,7 +85,7 @@ class eZWordToImageOperator
                 }
 
                 $ini = eZINI::instance( 'icon.ini' );
-                $repository = $ini->variable( 'IconSettings', 'Repository' );
+                $defaultRepository = $ini->variable( 'IconSettings', 'Repository' );
                 $theme = $ini->variable( 'IconSettings', 'Theme' );
                 $groups = array( 'mimetype' => 'MimeIcons',
                                  'class' => 'ClassIcons',
@@ -101,7 +101,7 @@ class eZWordToImageOperator
                 $mapName = $mapNames[$type];
 
                 // BC : Hack : Share Icons In Extensions
-                $standard_theme = $ini->variable( 'IconSettings', 'StandardTheme' );
+                $standardTheme = $ini->variable( 'IconSettings', 'StandardTheme' );
                 $extensions = $ini->variable( 'ExtensionSettings', 'IconExtensions' );
                 $siteDir = eZSys::siteDir();
                 $matches = array();
@@ -115,139 +115,143 @@ class eZWordToImageOperator
                 }
 
                 // Load icon settings from the theme
-                $themeINI = eZINI::instance( 'icon.ini', $repository . '/' . $theme );
-                
-		// BC : Hack : Share Icons In Extensions
-		$availableThemes = $themeINI->variable( 'IconSettings', 'AdditionalThemeList' );
-                if ( !is_array($avalibleThemes) )
-                    $avalibleThemes = array();
-                array_unshift($avalibleThemes, $theme);
-                array_push($avalibleThemes, $standard_theme);
+                $themeINI = eZINI::instance( 'icon.ini', $defaultRepository . '/' . $theme );
 
+                // BC : Hack : Share Icons In Extensions
+                $availableThemes = $themeINI->variable( 'IconSettings', 'AdditionalThemeList' );
+
+                if ( !is_array($availableThemes) )
+                    $availableThemes = array();
+                array_unshift($availableThemes, $theme);
+                array_push($availableThemes, $standardTheme);
+
+                $matches[] = $defaultRepository;
                 foreach ( $extensions as $extension )
                 {
                     $matches[] = "$extensionDirectory/$extension/icons";
                 }
 
-                $matches[] = $repository;
-
-                foreach ( $avalibleThemes as $theme )
+                foreach ( $availableThemes as $theme )
                 {
                     foreach ( $matches as $repository )
                     {
                         // Load icon settings from the theme
                         $themeRepositoryINI = eZINI::instance( 'icon.ini', $repository . '/' . $theme );
 
+                        $sizes = $themeRepositoryINI->variable( 'IconSettings', 'Sizes' );
+                        if ( $ini->hasVariable( 'IconSettings', 'Sizes' ) )
+                        {
+                            $sizes = array_merge( $sizes,
+                                                  $ini->variable( 'IconSettings', 'Sizes' ) );
+                        }
 
+                        $sizePathList = array();
+                        $sizeInfoList = array();
 
-		        $sizes = $themeRepositoryINI->variable( 'IconSettings', 'Sizes' );
-		        if ( $ini->hasVariable( 'IconSettings', 'Sizes' ) )
-		        {
-		            $sizes = array_merge( $sizes,
-		                                  $ini->variable( 'IconSettings', 'Sizes' ) );
-		        }
+                        if ( is_array( $sizes ) )
+                        {
+                            foreach ( $sizes as $key => $size )
+                            {
+                                $pathDivider = strpos( $size, ';' );
+                                if ( $pathDivider !== false )
+                                {
+                                    $sizePath = substr( $size, $pathDivider + 1 );
+                                    $size = substr( $size, 0, $pathDivider );
+                                }
+                                else
+                                {
+                                    $sizePath = $size;
+                                }
 
-		        $sizePathList = array();
-		        $sizeInfoList = array();
+                                $width = false;
+                                $height = false;
+                                $xDivider = strpos( $size, 'x' );
+                                if ( $xDivider !== false )
+                                {
+                                    $width = (int)substr( $size, 0, $xDivider );
+                                    $height = (int)substr( $size, $xDivider + 1 );
+                                }
+                                $sizePathList[$key] = $sizePath;
+                                $sizeInfoList[$key] = array( $width, $height );
+                            }
+                        }
 
-		        if ( is_array( $sizes ) )
-		        {
-		            foreach ( $sizes as $key => $size )
-		            {
-		                $pathDivider = strpos( $size, ';' );
-		                if ( $pathDivider !== false )
-		                {
-		                    $sizePath = substr( $size, $pathDivider + 1 );
-		                    $size = substr( $size, 0, $pathDivider );
-		                }
-		                else
-		                {
-		                    $sizePath = $size;
-		                }
+                        $map = array();
 
-		                $width = false;
-		                $height = false;
-		                $xDivider = strpos( $size, 'x' );
-		                if ( $xDivider !== false )
-		                {
-		                    $width = (int)substr( $size, 0, $xDivider );
-		                    $height = (int)substr( $size, $xDivider + 1 );
-		                }
-		                $sizePathList[$key] = $sizePath;
-		                $sizeInfoList[$key] = array( $width, $height );
-		            }
-		        }
+                        // Load mapping from theme
+                        if ( $themeRepositoryINI->hasVariable( $configGroup, $mapName ) )
+                        {
+                            $map = array_merge( $map,
+                                           $themeRepositoryINI->variable( $configGroup, $mapName ) );
+                        }
+                        // Load override mappings if they exist
+                        if ( $ini->hasVariable( $configGroup, $mapName ) )
+                        {
+                            $map = array_merge( $map,
+                                            $ini->variable( $configGroup, $mapName ) );
+                        }
 
-		        $map = array();
+                        $default = false;
+                        if ( $themeRepositoryINI->hasVariable( $configGroup, 'Default' ) )
+                            $default = $themeRepositoryINI->variable( $configGroup, 'Default' );
+                        if ( $ini->hasVariable( $configGroup, 'Default' ) )
+                            $default = $ini->variable( $configGroup, 'Default' );
 
-		        // Load mapping from theme
-		        if ( $themeRepositoryINI->hasVariable( $configGroup, $mapName ) )
-		        {
-		            $map = array_merge( $map,
-		                                $themeRepositoryINI->variable( $configGroup, $mapName ) );
-		        }
-		        // Load override mappings if they exist
-		        if ( $ini->hasVariable( $configGroup, $mapName ) )
-		        {
-		            $map = array_merge( $map,
-		                                $ini->variable( $configGroup, $mapName ) );
-		        }
+                        // Build return value
+                        $iconInfo = array( 'repository' => $repository,
+                                           'theme' => $theme,
+                                           'theme_path' => $repository . '/' . $theme,
+                                           'size_path_list' => $sizePathList,
+                                           'size_info_list' => $sizeInfoList,
+                                           'icons' => $map,
+                                           'default' => $default );
 
-		        $default = false;
-		        if ( $themeRepositoryINI->hasVariable( $configGroup, 'Default' ) )
-		            $default = $themeRepositoryINI->variable( $configGroup, 'Default' );
-		        if ( $ini->hasVariable( $configGroup, 'Default' ) )
-		            $default = $ini->variable( $configGroup, 'Default' );
-
-		        // Build return value
-		        $iconInfo = array( 'repository' => $repository,
-		                           'theme' => $theme,
-		                           'theme_path' => $repository . '/' . $theme,
-		                           'size_path_list' => $sizePathList,
-		                           'size_info_list' => $sizeInfoList,
-		                           'icons' => $map,
-		                           'default' => $default );
-
-			// BC : Hack : Share Icons In Extensions
-		        $files_exists = true;
-		        foreach ( $sizePathList as $sizePath )
-			{
-			    $filesystemIconPath = $siteDir . $repository . '/' . $theme . '/' . $sizePath . '/' . $icon;
-			    if ( is_file($filesystemIconPath) )
-			    {
-				$files_exists = false;
-			    }
-			}
-			if ( $files_exists )
-			{
-			    $iconFileAvalible = true;
-			    break;
-			}
-			else if ( !isset($fallbackIcon) )
-			{
-			    $fallbackIcon = $iconInfo;
-			}
-		    }
-		    if ( $iconFileAvalible )
-		    {
-			break;
-		    }
-		    else if ( isset($fallbackIcon) )
-		    {
-			$iconInfo = $fallbackIcon;
-		    }
+                        // BC : Hack : Share Icons In Extensions
+                        /*
+                        $files_exists = true;
+                        foreach ( $sizePathList as $sizePath )
+                        {
+                            $filesystemIconPath = $siteDir . $repository . '/' . $theme . '/' . $sizePath . '/' . $icon;
+                            if ( is_file($filesystemIconPath) )
+                            {
+                                $files_exists = false;
+                            }
+                        }
+                        if ( $files_exists )
+                        {
+                            $iconFileAvalible = true;
+                            break;
+                        }
+                        else if ( !isset($fallbackIcon) )
+                        {
+                            $fallbackIcon = $iconInfo;
+                        }
+                        */
+                    }
+                    /*
+                    if ( $iconFileAvalible )
+                    {
+                       break;
+                    }
+                    else if ( isset($fallbackIcon) )
+                    {
+                        $iconInfo = $fallbackIcon;
+                    }
+                    */
                 }
+                /*
                 $this->IconInfo[$type] = $iconInfo;
+                */
                 $operatorValue = $iconInfo;
             } break;
 
             case 'flag_icon':
             {
                 $ini = eZINI::instance( 'icon.ini' );
-                $repository = $ini->variable( 'FlagIcons', 'Repository' );
+                $defaultRepository = $ini->variable( 'FlagIcons', 'Repository' );
                 $theme = $ini->variable( 'FlagIcons', 'Theme' );
 
-		// BC : Hack : Share Icons In Extensions
+                // BC : Hack : Share Icons In Extensions
                 $extensions = $ini->variable( 'ExtensionSettings', 'IconExtensions' );
                 $matches = array();
                 $iconFileAvalible = false;
@@ -258,28 +262,28 @@ class eZWordToImageOperator
                 {
                     $matches[] = "$extensionDirectory/$extension/icons";
                 }
-                $matches[] = $repository;
+                $matches[] = $defaultRepository;
 
                 foreach ( $matches as $repository )
                 {
-			        // Load icon settings from the theme
-			        $themeINI = eZINI::instance( 'icon.ini', $repository . '/' . $theme );
+                    // Load icon settings from the theme
+                    $themeINI = eZINI::instance( 'icon.ini', $repository . '/' . $theme );
 
-			        $iconFormat = $themeINI->variable( 'FlagIcons', 'IconFormat' );
-			        if ( $ini->hasVariable( 'FlagIcons', 'IconFormat' ) )
-			        {
-			            $iconFormat = $ini->variable( 'FlagIcons', 'IconFormat' );
-			        }
+                    $iconFormat = $themeINI->variable( 'FlagIcons', 'IconFormat' );
+                    if ( $ini->hasVariable( 'FlagIcons', 'IconFormat' ) )
+                    {
+                        $iconFormat = $ini->variable( 'FlagIcons', 'IconFormat' );
+                    }
 
-			        $icon = $operatorValue . '.' . $iconFormat;
-			        $iconPath = $repository . '/' . $theme . '/' . $icon;
+                    $icon = $operatorValue . '.' . $iconFormat;
+                    $iconPath = $repository . '/' . $theme . '/' . $icon;
 
-			        if ( !is_readable( $iconPath ) )
-			        {
-			            $defaultIcon = $themeINI->variable( 'FlagIcons', 'DefaultIcon' );
-			            $iconPath = $repository . '/' . $theme . '/' . $defaultIcon . '.' . $iconFormat;
-			        }
-		        }
+                    if ( !is_readable( $iconPath ) )
+                    {
+                        $defaultIcon = $themeINI->variable( 'FlagIcons', 'DefaultIcon' );
+                        $iconPath = $repository . '/' . $theme . '/' . $defaultIcon . '.' . $iconFormat;
+                    }
+                }
                 if ( strlen( eZSys::wwwDir() ) > 0 )
                     $wwwDirPrefix = htmlspecialchars( eZSys::wwwDir(), ENT_COMPAT, 'UTF-8' ) . '/';
                 else
@@ -301,11 +305,11 @@ class eZWordToImageOperator
 
                 // BC : Hack : Share Icons In Extensions
                 $ini = eZINI::instance( 'icon.ini' );
-                $repository = $ini->variable( 'IconSettings', 'Repository' );
+                $defaultRepository = $ini->variable( 'IconSettings', 'Repository' );
                 $theme = $ini->variable( 'IconSettings', 'Theme' );
-                $standard_theme = $ini->variable( 'IconSettings', 'StandardTheme' );
+                $standardTheme = $ini->variable( 'IconSettings', 'StandardTheme' );
                 $extensions = $ini->variable( 'ExtensionSettings', 'IconExtensions' );
-                $iteDir = eZSys::siteDir();
+                $siteDir = eZSys::siteDir();
                 $matches = array();
                 $iconFileAvailable = false;
                 $extensionDirectory = eZExtension::baseDirectory();
@@ -323,118 +327,161 @@ class eZWordToImageOperator
                     $theme = $ini->variable( $configGroup, 'Theme' );
                 }
 
-                $avalibleThemes = $ini->variable( 'IconSettings', 'AdditionalThemeList' );
-                if ( !is_array($avalibleThemes) )
-                    $avalibleThemes = array();
-                array_unshift($avalibleThemes, $theme);
-                array_push($avalibleThemes, $standard_theme);
+                $availableThemes = $ini->variable( 'IconSettings', 'AdditionalThemeList' );
+
+                if ( !is_array($availableThemes) )
+                    $availableThemes = array();
+                array_unshift($availableThemes, $theme);
+                array_push($availableThemes, $standardTheme);
 
                 foreach ( $extensions as $extension )
                 {
                     $matches[] = "$extensionDirectory/$extension/icons";
                 }
-                
-                $matches[] = $repository;
-                
-                foreach ( $avalibleThemes as $theme )
+                $matches[] = $defaultRepository;
+
+                foreach ( $availableThemes as $theme )
                 {
                     foreach ( $matches as $repository )
                     {
-
                         // Load icon settings from the theme
                         $themeINI = eZINI::instance( 'icon.ini', $repository . '/' . $theme );
 
-                    if ( isset( $operatorParameters[0] ) )
+                        if ( isset( $operatorParameters[0] ) )
+                        {
+                            $sizeName = $tpl->elementValue( $operatorParameters[0], $rootNamespace, $currentNamespace );
+                        }
+                        else
+                        {
+                            $sizeName = $ini->variable( 'IconSettings', 'Size' );
+                            // Check if the specific icon type has a size setting
+                            if ( $ini->hasVariable( $configGroup, 'Size' ) )
+                            {
+                                $theme = $ini->variable( $configGroup, 'Size' );
+                            }
+                        }
+
+                        $sizes = $themeINI->variable( 'IconSettings', 'Sizes' );
+                        if ( $ini->hasVariable( 'IconSettings', 'Sizes' ) )
+                        {
+                            $sizes = array_merge( $sizes,
+                                                  $ini->variable( 'IconSettings', 'Sizes' ) );
+                        }
+
+                        if ( isset( $sizes[$sizeName] ) )
+                        {
+                            $size = $sizes[$sizeName];
+                        }
+                        else
+                        {
+                            $size = $sizes[0];
+                        }
+
+                        $pathDivider = strpos( $size, ';' );
+                        if ( $pathDivider !== false )
+                        {
+                            $sizePath = substr( $size, $pathDivider + 1 );
+                            $size = substr( $size, 0, $pathDivider );
+                        }
+                        else
+                        {
+                            $sizePath = $size;
+                        }
+
+                        $width = false;
+                        $height = false;
+                        $xDivider = strpos( $size, 'x' );
+                        if ( $xDivider !== false )
+                        {
+                            $width = (int)substr( $size, 0, $xDivider );
+                            $height = (int)substr( $size, $xDivider + 1 );
+                        }
+
+                        if ( isset( $operatorParameters[1] ) )
+                        {
+                            $altText = $tpl->elementValue( $operatorParameters[1], $rootNamespace, $currentNamespace );
+                        }
+                        else
+                        {
+                            $altText = $operatorValue;
+                        }
+
+                        if ( $operatorName == 'mimetype_icon' )
+                        {
+                            $icon = $this->iconGroupMapping( $ini, $themeINI,
+                                                             'MimeIcons', 'MimeMap',
+                                                             strtolower( $operatorValue ) );
+                        }
+                        else if ( $operatorName == 'class_icon' )
+                        {
+                            $icon = $this->iconDirectMapping( $ini, $themeINI,
+                                                              'ClassIcons', 'ClassMap',
+                                                              strtolower( $operatorValue ) );
+                        }
+                        else if ( $operatorName == 'classgroup_icon' )
+                        {
+                            $icon = $this->iconDirectMapping( $ini, $themeINI,
+                                                              'ClassGroupIcons', 'ClassGroupMap',
+                                                              strtolower( $operatorValue ) );
+                        }
+                        else if ( $operatorName == 'action_icon' )
+                        {
+                            $icon = $this->iconDirectMapping( $ini, $themeINI,
+                                                              'ActionIcons', 'ActionMap',
+                                                              strtolower( $operatorValue ) );
+                        }
+                        else if ( $operatorName == 'icon' )
+                        {
+                            $icon = $this->iconDirectMapping( $ini, $themeINI,
+                                                              'Icons', 'IconMap',
+                                                              strtolower( $operatorValue ) );
+                        }
+
+                        $filesystemIconPath = $siteDir . $repository . '/' . $theme . '/' . $sizePath . '/' . $icon;
+
+                        $iconField = array( 'repository' => $repository,
+                                            'theme' => $theme,
+                                            'sizePath' => $sizePath,
+                                            'icon' => $icon,
+                                            'width' => $width,
+                                            'height' => $height );
+
+                        if ( is_file($filesystemIconPath) and $icon != $themeINI->variable( $configGroup, 'Default' ) and $icon != $ini->variable( $configGroup, 'Default' ) )
+                        {
+                            $iconFileAvalible = true;
+                            break;
+                        }
+                        else if ( !isset($fallbackIconField) and is_file($filesystemIconPath) and
+                                    ( $icon == $themeINI->variable( $iniGroup, 'Default' ) or
+                                    $icon == $ini->variable( $iniGroup, 'Default' ) ) )
+                        {
+                            $fallbackIconField = $iconField;
+                        }
+
+                    }
+
+                    if ( $iconFileAvalible )
                     {
-                        $sizeName = $tpl->elementValue( $operatorParameters[0], $rootNamespace, $currentNamespace );
+                        break;
+                    }
+                    else if ( isset($fallbackIconField) )
+                    {
+                        $repository = $fallbackIconField['repository'];
+                        $theme = $fallbackIconField['theme'];
+                        $sizePath = $fallbackIconField['sizePath'];
+                        $icon = $fallbackIconField['icon'];
+                        $width = $fallbackIconField['width'];
+                        $height = $fallbackIconField['height'];
                     }
                     else
                     {
-                        $sizeName = $ini->variable( 'IconSettings', 'Size' );
-                        // Check if the specific icon type has a size setting
-                        if ( $ini->hasVariable( $configGroup, 'Size' ) )
+                        if ( $theme == $standardTheme and $repository == $defaultRepository )
                         {
-                            $theme = $ini->variable( $configGroup, 'Size' );
+                            eZDebug::writeError( "Missing icon file for '$operatorValue' with size '$sizeName'", "eZWordToImageOperator, case '$operatorName'" );
                         }
                     }
-
-                    $sizes = $themeINI->variable( 'IconSettings', 'Sizes' );
-                    if ( $ini->hasVariable( 'IconSettings', 'Sizes' ) )
-                    {
-                        $sizes = array_merge( $sizes,
-                                              $ini->variable( 'IconSettings', 'Sizes' ) );
-                    }
-
-                    if ( isset( $sizes[$sizeName] ) )
-                    {
-                        $size = $sizes[$sizeName];
-                    }
-                    else
-                    {
-                        $size = $sizes[0];
-                    }
-
-                    $pathDivider = strpos( $size, ';' );
-                    if ( $pathDivider !== false )
-                    {
-                        $sizePath = substr( $size, $pathDivider + 1 );
-                        $size = substr( $size, 0, $pathDivider );
-                    }
-                    else
-                    {
-                        $sizePath = $size;
-                    }
-
-                    $width = false;
-                    $height = false;
-                    $xDivider = strpos( $size, 'x' );
-                    if ( $xDivider !== false )
-                    {
-                        $width = (int)substr( $size, 0, $xDivider );
-                        $height = (int)substr( $size, $xDivider + 1 );
-                    }
-
-                    if ( isset( $operatorParameters[1] ) )
-                    {
-                        $altText = $tpl->elementValue( $operatorParameters[1], $rootNamespace, $currentNamespace );
-                    }
-                    else
-                    {
-                        $altText = $operatorValue;
-                    }
-
-                    if ( $operatorName == 'mimetype_icon' )
-                    {
-                        $icon = $this->iconGroupMapping( $ini, $themeINI,
-                                                         'MimeIcons', 'MimeMap',
-                                                         strtolower( $operatorValue ) );
-                    }
-                    else if ( $operatorName == 'class_icon' )
-                    {
-                        $icon = $this->iconDirectMapping( $ini, $themeINI,
-                                                          'ClassIcons', 'ClassMap',
-                                                          strtolower( $operatorValue ) );
-                    }
-                    else if ( $operatorName == 'classgroup_icon' )
-                    {
-                        $icon = $this->iconDirectMapping( $ini, $themeINI,
-                                                          'ClassGroupIcons', 'ClassGroupMap',
-                                                          strtolower( $operatorValue ) );
-                    }
-                    else if ( $operatorName == 'action_icon' )
-                    {
-                        $icon = $this->iconDirectMapping( $ini, $themeINI,
-                                                          'ActionIcons', 'ActionMap',
-                                                          strtolower( $operatorValue ) );
-                    }
-                    else if ( $operatorName == 'icon' )
-                    {
-                        $icon = $this->iconDirectMapping( $ini, $themeINI,
-                                                          'Icons', 'IconMap',
-                                                          strtolower( $operatorValue ) );
-                    }
                 }
-                }
+
                 $iconPath = '/' . $repository . '/' . $theme;
                 $iconPath .= '/' . $sizePath;
                 $iconPath .= '/' . $icon;
@@ -589,4 +636,5 @@ class eZWordToImageOperator
     public $Operators;
     public $IconInfo;
 }
+
 ?>

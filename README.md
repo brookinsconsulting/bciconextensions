@@ -147,6 +147,23 @@ Optional. Clear eZ Publish Platform / eZ Publish Legacy caches (Required).
     php ./bin/php/ezcache.php --clear-all;
 
 
+### Install Rewrite Rules
+
+#### Apache Rewrite Rules
+
+Required. To be able to access the image files provided by an icon extension you must install the following apache mod_rewrite rule into your webserver's virtual host configuration.
+
+    # bciconextensions required mod_rewrite rules to allow access to icon extension icon image files
+    RewriteRule ^/extension/[^/]+/icons/[^/]+/[^/]+/[^/]+/.* - [L]
+
+#### Nginx Rewrite Rules
+
+Required. To be able to access the image files provided by an icon extension you must install the following nginx rewrite rule into your webserver's virtual host configuration.
+
+    # bciconextensions required rewrite rules to allow access to icon extension icon image files
+    rewrite "^/extension/([^/]+)/icons/([^/]+)/([^/]+)/([^/]+)/(.*)" "/extension/$1/icons/$2/$3/$4" break;
+
+
 Usage
 =====
 
@@ -187,6 +204,8 @@ AdditionalThemeList[]=blue
 AdditionalThemeList[]=exotic
 
 And make shure they exists either in an extension or in the default repository.
+
+*Please note:* The directory structure of your icon extension (and it's themes) must match the directory structure conventions of the eZ Publish Legacy share/icons content provided in a default installation. The more you match the defaults expected the less ini setting configuration settings override you will require.
 
 
 Troubleshooting
