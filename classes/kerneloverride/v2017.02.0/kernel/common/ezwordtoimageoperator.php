@@ -115,7 +115,7 @@ class eZWordToImageOperator
                 }
 
                 // Load icon settings from the theme
-                $themeINI = eZINI::instance( 'icon.ini', $repository . '/' . $theme );
+                $themeINI = eZINI::instance( 'icon.ini', $defaultRepository . '/' . $theme );
 
                 // BC : Hack : Share Icons In Extensions
                 $availableThemes = $themeINI->variable( 'IconSettings', 'AdditionalThemeList' );
@@ -125,11 +125,11 @@ class eZWordToImageOperator
                 array_unshift($avalibleThemes, $theme);
                 array_push($avalibleThemes, $standardTheme);
 
+                $matches[] = $defaultRepository;
                 foreach ( $extensions as $extension )
                 {
                     $matches[] = "$extensionDirectory/$extension/icons";
                 }
-                $matches[] = $repository;
 
                 foreach ( $avalibleThemes as $theme )
                 {
