@@ -35,8 +35,14 @@
 #Size=normal
 
 #[ClassIcons]
+# Default icon if there is no class match
+#Default=mimetypes/empty.png
 #ClassMap[classidentifier]=subfoldername/imagefilename.png
 #ClassMap[classidentifier1]=subfoldername/imagefilename1.png
 #ClassMap[classidentifier2]=subfoldername/imagefilename2.png
+
+#[FlagIcons]
+#IconFormat=gif
+#DefaultIcon=unknown
 
 */ ?>

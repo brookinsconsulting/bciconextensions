@@ -161,7 +161,7 @@ Required. To be able to access the image files provided by an icon extension you
 Required. To be able to access the image files provided by an icon extension you must install the following nginx rewrite rule into your webserver's virtual host configuration.
 
     # bciconextensions required rewrite rules to allow access to icon extension icon image files
-    rewrite "^/extension/([^/]+)/icons/([^/]+)/([^/]+)/([^/]+)/(.*)" "/extension/$1/design/$2/$3/$4" break;
+    rewrite "^/extension/([^/]+)/icons/([^/]+)/([^/]+)/([^/]+)/(.*)" "/extension/$1/icons/$2/$3/$4" break;
 
 
 Usage

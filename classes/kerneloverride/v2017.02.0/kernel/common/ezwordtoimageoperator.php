@@ -120,10 +120,10 @@ class eZWordToImageOperator
                 // BC : Hack : Share Icons In Extensions
                 $availableThemes = $themeINI->variable( 'IconSettings', 'AdditionalThemeList' );
 
-                if ( !is_array($avalibleThemes) )
-                    $avalibleThemes = array();
-                array_unshift($avalibleThemes, $theme);
-                array_push($avalibleThemes, $standardTheme);
+                if ( !is_array($availableThemes) )
+                    $availableThemes = array();
+                array_unshift($availableThemes, $theme);
+                array_push($availableThemes, $standardTheme);
 
                 $matches[] = $defaultRepository;
                 foreach ( $extensions as $extension )
@@ -131,7 +131,7 @@ class eZWordToImageOperator
                     $matches[] = "$extensionDirectory/$extension/icons";
                 }
 
-                foreach ( $avalibleThemes as $theme )
+                foreach ( $availableThemes as $theme )
                 {
                     foreach ( $matches as $repository )
                     {
@@ -207,6 +207,7 @@ class eZWordToImageOperator
                                            'default' => $default );
 
                         // BC : Hack : Share Icons In Extensions
+                        /*
                         $files_exists = true;
                         foreach ( $sizePathList as $sizePath )
                         {
@@ -225,7 +226,9 @@ class eZWordToImageOperator
                         {
                             $fallbackIcon = $iconInfo;
                         }
+                        */
                     }
+                    /*
                     if ( $iconFileAvalible )
                     {
                        break;
@@ -234,8 +237,11 @@ class eZWordToImageOperator
                     {
                         $iconInfo = $fallbackIcon;
                     }
+                    */
                 }
+                /*
                 $this->IconInfo[$type] = $iconInfo;
+                */
                 $operatorValue = $iconInfo;
             } break;
 
@@ -303,7 +309,7 @@ class eZWordToImageOperator
                 $theme = $ini->variable( 'IconSettings', 'Theme' );
                 $standardTheme = $ini->variable( 'IconSettings', 'StandardTheme' );
                 $extensions = $ini->variable( 'ExtensionSettings', 'IconExtensions' );
-                $iteDir = eZSys::siteDir();
+                $siteDir = eZSys::siteDir();
                 $matches = array();
                 $iconFileAvailable = false;
                 $extensionDirectory = eZExtension::baseDirectory();
@@ -321,12 +327,12 @@ class eZWordToImageOperator
                     $theme = $ini->variable( $configGroup, 'Theme' );
                 }
 
-                $avalibleThemes = $ini->variable( 'IconSettings', 'AdditionalThemeList' );
+                $availableThemes = $ini->variable( 'IconSettings', 'AdditionalThemeList' );
 
-                if ( !is_array($avalibleThemes) )
-                    $avalibleThemes = array();
-                array_unshift($avalibleThemes, $theme);
-                array_push($avalibleThemes, $standardTheme);
+                if ( !is_array($availableThemes) )
+                    $availableThemes = array();
+                array_unshift($availableThemes, $theme);
+                array_push($availableThemes, $standardTheme);
 
                 foreach ( $extensions as $extension )
                 {
@@ -334,7 +340,7 @@ class eZWordToImageOperator
                 }
                 $matches[] = $defaultRepository;
 
-                foreach ( $avalibleThemes as $theme )
+                foreach ( $availableThemes as $theme )
                 {
                     foreach ( $matches as $repository )
                     {
@@ -440,7 +446,7 @@ class eZWordToImageOperator
                                             'width' => $width,
                                             'height' => $height );
 
-                        if ( is_file($filesystemIconPath) and $icon != $themeINI->variable( $iniGroup, 'Default' ) and $icon != $ini->variable( $iniGroup, 'Default' ) )
+                        if ( is_file($filesystemIconPath) and $icon != $themeINI->variable( $configGroup, 'Default' ) and $icon != $ini->variable( $configGroup, 'Default' ) )
                         {
                             $iconFileAvalible = true;
                             break;
